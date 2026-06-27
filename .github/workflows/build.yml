@@ -1,0 +1,25 @@
+name: Build Windows EXE
+on: [push]
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+      - name: Create launcher
+        run: |
+          echo "import subprocess, sys, os" > launcher.py
+          echo "os.chdir(os.path.dirname(sys.executable))" >> launcher.py
+          echo "subprocess.run([sys.executable, '-m', 'streamlit', 'run', 'app.py', '--server.headless=true'])" >> launcher.py
+      - name: Build EXE
+        run: pyinstaller --onefile --name my-app launcher.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: dist/my-app.exe
