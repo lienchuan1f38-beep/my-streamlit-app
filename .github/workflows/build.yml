@@ -13,17 +13,22 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
       - name: Create launcher
+        shell: python
         run: |
-          echo import subprocess, sys, os, threading, time, webbrowser > launcher.py
-          echo os.chdir(os.path.dirname(os.path.abspath(sys.argv[0]))) >> launcher.py
-          echo def open_browser(): >> launcher.py
-          echo     time.sleep(3) >> launcher.py
-          echo     webbrowser.open('http://localhost:8501') >> launcher.py
-          echo threading.Thread(target=open_browser).start() >> launcher.py
-          echo subprocess.run([sys.executable, '-m', 'streamlit', 'run', 'app.py', '--server.headless=true']) >> launcher.py
+          code = '''
+          import subprocess, sys, os, threading, time, webbrowser
+          os.chdir(os.path.dirname(os.path.abspath(sys.argv[0])))
+          def open_browser():
+              time.sleep(4)
+              webbrowser.open("http://localhost:8501")
+          threading.Thread(target=open_browser, daemon=True).start()
+          subprocess.run([sys.executable, "-m", "streamlit", "run", "app.py", "--server.headless=true"])
+          '''
+          with open("launcher.py", "w") as f:
+              f.write(code)
       - name: Build EXE
         run: |
-          pyinstaller --onefile --name my-app --add-data "app.py;." --add-data "requirements.txt;." --add-data "sample_data.csv;." --add-data "main.py;." --add-data "analysis.py;." --add-data "charts.py;." --add-data "data_loader.py;." launcher.py
+          pyinstaller --onefile --name my-app --add-data "app.py;." --add-data "sample_data.csv;." --add-data "main.py;." --add-data "analysis.py;." --add-data "charts.py;." --add-data "data_loader.py;." launcher.py
       - uses: actions/upload-artifact@v4
         with:
           name: windows-exe
